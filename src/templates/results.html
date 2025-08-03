@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>News Analysis Results</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <style>
+        body {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .overall-sentiment {
+            background-color: #f8f9fa;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .article {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background-color: white;
+        }
+
+        .sentiment-details {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+
+        .sentiment {
+            font-size: 1.1em;
+            margin: 10px 0;
+        }
+
+        .sentiment-scores {
+            margin: 15px 0;
+        }
+
+        .score-bar {
+            display: flex;
+            height: 25px;
+            border-radius: 12px;
+            overflow: hidden;
+            background-color: #f0f0f0;
+            margin: 10px 0;
+        }
+
+        .score-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .positive-score {
+            background-color: #28a745;
+            color: white;
+            text-align: center;
+            font-size: 0.9em;
+            line-height: 25px;
+            transition: width 0.3s ease;
+        }
+
+        .negative-score {
+            background-color: #dc3545;
+            color: white;
+            text-align: center;
+            font-size: 0.9em;
+            line-height: 25px;
+            transition: width 0.3s ease;
+        }
+
+        .neutral-score {
+            background-color: #6c757d;
+            color: white;
+            text-align: center;
+            font-size: 0.9em;
+            line-height: 25px;
+            transition: width 0.3s ease;
+        }
+
+        .positive { color: #28a745; font-weight: bold; }
+        .negative { color: #dc3545; font-weight: bold; }
+        .neutral { color: #6c757d; font-weight: bold; }
+
+        audio {
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        .error {
+            color: #dc3545;
+            padding: 20px;
+            background-color: #f8d7da;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .back-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+            transition: background-color 0.3s ease;
+        }
+
+        .back-button:hover {
+            background-color: #0056b3;
+        }
+
+        .topics-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 10px 0;
+        }
+        .topic-tag {
+            background-color: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.9em;
+            color: #495057;
+        }
+        .comparative-analysis {
+            background-color: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .source-comparison {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .audio-player {
+            margin-top: 20px;
+        }
+        .coverage-differences, .topic-overlap {
+            background-color: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .source-comparison {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>News Analysis Results</h1>
+
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% else %}
+            <div class="overall-sentiment">
+                <h2>Overall Sentiment</h2>
+                <p class="sentiment {{ overall_sentiment.lower() }}">{{ overall_sentiment }}</p>
+                {% if audio_file %}
+                <div class="audio-player">
+                    <audio controls>
+                        <source src="{{ url_for('static', filename=audio_file) }}" type="audio/mpeg">
+                        Your browser does not support the audio element.
+                    </audio>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="comparative-analysis">
+                <h2>Comparative Analysis</h2>
+                {% if comparative_analysis %}
+                    {% for source, data in comparative_analysis.items() %}
+                    <div class="source-comparison">
+                        <h3>{{ source }}</h3>
+                        <p>Articles found: {{ data.article_count }}</p>
+                        <div class="topics-list">
+                            <strong>Common Topics:</strong>
+                            {% for topic in data.topics %}
+                            <span class="topic-tag">{{ topic }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p>No comparative analysis available.</p>
+                {% endif %}
+            </div>
+
+            <div class="coverage-differences">
+                <h2>Coverage Differences</h2>
+                {% for difference in coverage_differences %}
+                <div class="difference">
+                    <p><strong>Article 1:</strong> {{ difference['Article 1'] }}</p>
+                    <p><strong>Article 2:</strong> {{ difference['Article 2'] }}</p>
+                    <p><strong>Similarity:</strong> {{ difference['Similarity'] }}</p>
+                    <p><strong>Impact:</strong> {{ difference['Impact'] }}</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="topic-overlap">
+                <h2>Topic Overlap</h2>
+                <div class="topics-list">
+                    <strong>Common Topics:</strong>
+                    {% for topic in common_topics %}
+                    <span class="topic-tag">{{ topic }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% for i in range(articles|length) %}
+            <div class="article">
+                <h2 class="article-title">{{ articles[i].title }}</h2>
+                
+                <div class="summary-section">
+                    <h3 class="summary-header">Summary</h3>
+                    <p class="summary-text">{{ articles[i].summary }}</p>
+                </div>
+
+                <div class="topics-section">
+                    <h3>Key Topics</h3>
+                    <div class="topics-list">
+                        {% for topic in articles[i].topics %}
+                        <span class="topic-tag">{{ topic }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="sentiment-details">
+                    <p class="sentiment {{ sentiment_results[i].sentiment.lower() }}">
+                        Sentiment: {{ sentiment_results[i].sentiment }}
+                    </p>
+                    <div class="sentiment-scores">
+                        <div class="score-bar">
+                            <div class="positive-score" style="width: {{ (sentiment_results[i].scores.positive * 100)|round }}%">
+                                {{ "%.1f"|format(sentiment_results[i].scores.positive * 100) }}%
+                            </div>
+                            <div class="negative-score" style="width: {{ (sentiment_results[i].scores.negative * 100)|round }}%">
+                                {{ "%.1f"|format(sentiment_results[i].scores.negative * 100) }}%
+                            </div>
+                            <div class="neutral-score" style="width: {{ (sentiment_results[i].scores.neutral * 100)|round }}%">
+                                {{ "%.1f"|format(sentiment_results[i].scores.neutral * 100) }}%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="source-info">
+                    Source: {{ articles[i].source }}
+                    {% if articles[i].link %}
+                    <a href="{{ articles[i].link }}" target="_blank" rel="noopener noreferrer" class="read-more">
+                        Read full article →
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        <a href="{{ url_for('home') }}" class="back-button">Analyze Another Company</a>
+    </div>
+</body>
+</html>

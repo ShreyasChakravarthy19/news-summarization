@@ -1,0 +1,10 @@
+requests
+beautifulsoup4
+flask
+nltk
+gtts
+pydub
+numpy
+pandas
+textblob
+langdetect
